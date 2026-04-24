@@ -1,0 +1,198 @@
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== BODY ===== */
+body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    height: 100vh;
+    background: #0f172a; /* dark background */
+}
+
+/* ===== MAIN CONTAINER ===== */
+.login-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* ===== LEFT SIDE ===== */
+/* ===== LEFT SIDE ===== */
+.login-left {
+    width: 40%;
+    background: #f8fafc;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===== CARD BOX ===== */
+.form-box {
+    width: 340px;
+
+    background: #ffffff;
+    padding: 35px 30px;
+
+    border-radius: 14px;
+
+    /* premium shadow */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+
+    border: 1px solid #e5e7eb;
+}
+
+/* ===== HEADING ===== */
+.form-box h2 {
+    font-size: 26px;
+    margin-bottom: 20px;
+    color: #111827;
+}
+
+/* ===== INPUTS ===== */
+.form-box input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.form-box input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    outline: none;
+}
+
+/* ===== OPTIONS ===== */
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* LEFT SIDE (checkbox + text) */
+.options label {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* spacing between checkbox and text */
+    font-size: 13px;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+/* CHECKBOX FIX */
+.options input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* RIGHT SIDE LINK */
+.options a {
+    font-size: 13px;
+    text-decoration: none;
+    color: #2563eb;
+}
+
+.options a:hover {
+    text-decoration: underline;
+}
+/* ===== BUTTON ===== */
+.form-box button {
+    width: 100%;
+    padding: 12px;
+
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 15px;
+    font-weight: 500;
+
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.form-box button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 15px rgba(37,99,235,0.2);
+}
+
+/* ===== RIGHT SIDE ===== */
+.login-right {
+    width: 60%;
+
+    /* blue gradient like your image */
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px;
+}
+
+/* HEADING */
+.login-right h1 {
+    font-size: 48px;
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+/* TEXT */
+.login-right p {
+    font-size: 16px;
+    max-width: 400px;
+    opacity: 0.9;
+}
+/* SWITCH TEXT */
+.switch-text {
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.switch-text span {
+    color: #2563eb;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.switch-text span:hover {
+    text-decoration: underline;
+}
+/* ===== ROLE DROPDOWN FIX ===== */
+#registerForm select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+
+    border-radius: 8px;
+    border: 1px solid #ddd;
+
+    font-size: 14px;
+    background: white;
+
+    appearance: none; /* removes default ugly style */
+    cursor: pointer;
+}
+
+/* FOCUS SAME AS INPUT */
+#registerForm select:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 5px rgba(37,99,235,0.3);
+}
