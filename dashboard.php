@@ -31,7 +31,7 @@ if (!isset($_SESSION['user_id'])) {
 
         <h2>Welcome to Dashboard</h2>
 
-        <!-- Add Task Form -->
+        <!-- ✅ ADD TASK FORM -->
         <form id="taskForm" class="task-form">
 
             <!-- TITLE -->
@@ -40,7 +40,7 @@ if (!isset($_SESSION['user_id'])) {
                 <input type="text" name="title" required>
             </div>
 
-            <!-- DESCRIPTION (OPTIONAL) -->
+            <!-- DESCRIPTION -->
             <div class="form-group">
                 <label>Description</label>
                 <textarea name="description"></textarea>
@@ -73,7 +73,7 @@ if (!isset($_SESSION['user_id'])) {
                 <input type="date" name="due_date" required>
             </div>
 
-            <!-- CATEGORY (OPTIONAL) -->
+            <!-- CATEGORY -->
             <div class="form-group">
                 <label>Category</label>
                 <input type="text" name="category">
@@ -83,7 +83,7 @@ if (!isset($_SESSION['user_id'])) {
 
         </form>
 
-        <!-- STATS -->
+        <!-- ✅ STATS -->
         <div class="stats">
 
             <div class="card">
@@ -103,29 +103,12 @@ if (!isset($_SESSION['user_id'])) {
 
         </div>
 
+        
     </div>
 </div>
 
-<!-- JS -->
+<!-- ✅ ONLY THIS SCRIPT (IMPORTANT) -->
 <script src="assets/js/script.js"></script>
-
-<script>
-    loadStats();
-
-    // ✅ EXTRA VALIDATION (JS)
-    document.getElementById("taskForm").addEventListener("submit", function(e) {
-
-        let title = document.querySelector("[name='title']").value.trim();
-        let priority = document.querySelector("[name='priority']").value;
-        let status = document.querySelector("[name='status']").value;
-        let date = document.querySelector("[name='due_date']").value;
-
-        if (!title || !priority || !status || !date) {
-            alert("Please fill all required fields!");
-            e.preventDefault();
-        }
-    });
-</script>
 
 </body>
 </html>

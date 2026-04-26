@@ -24,22 +24,24 @@ if (taskForm) {
 
         let formData = new FormData(this);
 
-        // ✅ AJAX REQUEST (ADD TASK)
+        // ✅ AJAX REQUEST
         fetch("tasks/add_task.php", {
             method: "POST",
             body: formData
         })
         .then(res => res.text())
         .then(data => {
-            // Optional: show response
-            console.log(data);
+            alert("Task Added Successfully ✅");
 
             loadTasks();   // refresh tasks
             loadStats();   // refresh stats
 
             taskForm.reset(); // clear form
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+            console.error(err);
+            alert("Error adding task ❌");
+        });
     });
 }
 
@@ -54,19 +56,21 @@ function loadTasks() {
     .then(data => {
         taskList.innerHTML = data;
     })
-    .catch(err => console.log(err));
+    .catch(err => console.error("Error loading tasks:", err));
 }
 
 // ===== DELETE TASK =====
 function deleteTask(id) {
     if (confirm("Are you sure you want to delete this task?")) {
+
         fetch("tasks/delete_task.php?id=" + id)
         .then(res => res.text())
         .then(() => {
+            alert("Task Deleted ❌");
             loadTasks();
             loadStats();
         })
-        .catch(err => console.log(err));
+        .catch(err => console.error("Delete error:", err));
     }
 }
 
@@ -75,42 +79,43 @@ function completeTask(id) {
     fetch("tasks/complete_task.php?id=" + id)
     .then(res => res.text())
     .then(() => {
+        alert("Task Marked as Completed ✅");
         loadTasks();
         loadStats();
     })
-    .catch(err => console.log(err));
+    .catch(err => console.error("Complete error:", err));
 }
 
 // ===== EDIT TASK =====
 function editTask(id, title, description) {
+
     let newTitle = prompt("Edit Title:", title);
+    if (newTitle === null || newTitle.trim() === "") return;
+
     let newDesc = prompt("Edit Description:", description);
 
-    if (newTitle !== null && newTitle.trim() !== "") {
-        let formData = new FormData();
-        formData.append("id", id);
-        formData.append("title", newTitle.trim());
-        formData.append("description", newDesc);
+    let formData = new FormData();
+    formData.append("id", id);
+    formData.append("title", newTitle.trim());
+    formData.append("description", newDesc);
 
-        fetch("tasks/update_task.php", {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.text())
-        .then(() => {
-            loadTasks();
-            loadStats();
-        })
-        .catch(err => console.log(err));
-    }
+    fetch("tasks/update_task.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.text())
+    .then(() => {
+        alert("Task Updated ✏️");
+        loadTasks();
+        loadStats();
+    })
+    .catch(err => console.error("Update error:", err));
 }
 
 // ===== LOAD STATS =====
 function loadStats() {
-    let total = document.getElementById("totalTasks");
 
-    // If stats not on page, skip
-    if (!total) return;
+    if (!document.getElementById("totalTasks")) return;
 
     fetch("tasks/get_stats.php")
     .then(res => res.json())
@@ -119,6 +124,5 @@ function loadStats() {
         document.getElementById("pendingTasks").innerText = data.pending;
         document.getElementById("completedTasks").innerText = data.completed;
     })
-    .catch(err => console.log(err));
-
+    .catch(err => console.error("Stats error:", err));
 }
