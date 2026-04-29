@@ -2,24 +2,52 @@
 session_start();
 include("../config/db.php");
 
-if ($_SESSION['role'] != 'admin') {
+// Protect Admin Route
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
     header("Location: ../index.php");
+    exit();
 }
 
-// STATS
-$totalUsers = $conn->query("SELECT * FROM users")->num_rows;
-$totalTasks = $conn->query("SELECT * FROM tasks")->num_rows;
-$pendingTasks = $conn->query("SELECT * FROM tasks WHERE status='pending'")->num_rows;
-$completedTasks = $conn->query("SELECT * FROM tasks WHERE status='completed'")->num_rows;
+/** * STATS LOGIC
+ * We filter by 'deleted_at IS NULL' to ensure only active data is counted.
+ */
 
-// RECENT USERS
-$recentUsers = $conn->query("SELECT * FROM users WHERE role != 'admin' ORDER BY id DESC LIMIT 5");
-// RECENT TASKS
+// 1. Total Active Users (excluding admins)
+$totalUsers = $conn->query("SELECT * FROM users WHERE role != 'admin' AND deleted_at IS NULL")->num_rows;
+
+// 2. Total Active Tasks from Active Users
+$totalTasks = $conn->query("
+    SELECT tasks.id FROM tasks 
+    JOIN users ON tasks.user_id = users.id 
+    WHERE tasks.deleted_at IS NULL AND users.deleted_at IS NULL
+")->num_rows;
+
+// 3. Pending Tasks from Active Users
+$pendingTasks = $conn->query("
+    SELECT tasks.id FROM tasks 
+    JOIN users ON tasks.user_id = users.id 
+    WHERE tasks.status='pending' AND tasks.deleted_at IS NULL AND users.deleted_at IS NULL
+")->num_rows;
+
+// 4. Completed Tasks from Active Users
+$completedTasks = $conn->query("
+    SELECT tasks.id FROM tasks 
+    JOIN users ON tasks.user_id = users.id 
+    WHERE tasks.status='completed' AND tasks.deleted_at IS NULL AND users.deleted_at IS NULL
+")->num_rows;
+
+
+// RECENT USERS (Only non-deleted users)
+$recentUsers = $conn->query("SELECT * FROM users WHERE role != 'admin' AND deleted_at IS NULL ORDER BY id DESC LIMIT 5");
+
+// RECENT TASKS (Only active tasks from active users)
 $recentTasks = $conn->query("
     SELECT tasks.*, users.name 
     FROM tasks 
     JOIN users ON tasks.user_id = users.id 
-    WHERE users.role != 'admin'
+    WHERE users.role != 'admin' 
+    AND users.deleted_at IS NULL 
+    AND tasks.deleted_at IS NULL
     ORDER BY tasks.id DESC 
     LIMIT 5
 ");
@@ -28,13 +56,13 @@ $recentTasks = $conn->query("
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="../assets/css/admin.css">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="../assets/css/Admin.css">
 </head>
 <body>
 
 <div class="container">
 
-<!-- SIDEBAR -->
 <div class="sidebar">
     <h2>Admin Panel</h2>
     <ul>
@@ -45,12 +73,10 @@ $recentTasks = $conn->query("
     </ul>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
 <div class="header">Dashboard Overview</div>
 
-<!-- CARDS -->
 <div class="cards">
     <div class="card">
         <h3>Total Users</h3>
@@ -73,42 +99,53 @@ $recentTasks = $conn->query("
     </div>
 </div>
 
-<!-- TWO COLUMN SECTION -->
 <div style="display:flex; gap:20px; margin-top:20px;">
 
-    <!-- RECENT USERS -->
     <div style="flex:1;">
-        <h3 class="section-title">Recent Users</h3>
+        <h3 class="section-title">Recent Active Users</h3>
         <table>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-            </tr>
-
-            <?php while($u = $recentUsers->fetch_assoc()): ?>
-            <tr>
-                <td><?php echo $u['name']; ?></td>
-                <td><?php echo $u['email']; ?></td>
-            </tr>
-            <?php endwhile; ?>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if($recentUsers->num_rows > 0): ?>
+                    <?php while($u = $recentUsers->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($u['name']); ?></td>
+                        <td><?php echo htmlspecialchars($u['email']); ?></td>
+                    </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr><td colspan="2" style="text-align:center; color:gray;">No active users.</td></tr>
+                <?php endif; ?>
+            </tbody>
         </table>
     </div>
 
-    <!-- RECENT TASKS -->
     <div style="flex:1;">
-        <h3 class="section-title">Recent Tasks</h3>
+        <h3 class="section-title">Recent Active Tasks</h3>
         <table>
-            <tr>
-                <th>Title</th>
-                <th>User</th>
-            </tr>
-
-            <?php while($t = $recentTasks->fetch_assoc()): ?>
-            <tr>
-                <td><?php echo $t['title']; ?></td>
-                <td><?php echo $t['name']; ?></td>
-            </tr>
-            <?php endwhile; ?>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if($recentTasks->num_rows > 0): ?>
+                    <?php while($t = $recentTasks->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($t['title']); ?></td>
+                        <td><?php echo htmlspecialchars($t['name']); ?></td>
+                    </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr><td colspan="2" style="text-align:center; color:gray;">No active tasks.</td></tr>
+                <?php endif; ?>
+            </tbody>
         </table>
     </div>
 

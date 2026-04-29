@@ -37,6 +37,7 @@ echo json_encode([
     "total" => (int)($data['total'] ?? 0),
     "pending" => (int)($data['pending'] ?? 0),
     "completed" => (int)($data['completed'] ?? 0)
+    
 ]);
 
 $stmt->close();

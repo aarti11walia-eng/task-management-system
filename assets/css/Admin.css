@@ -19,10 +19,10 @@ body {
 /* ===== SIDEBAR ===== */
 .sidebar {
     width: 240px;
-    height: 100vh;
     background: #111827;
     color: #fff;
     padding: 20px;
+    height:2000px;
 }
 
 .sidebar h2 {

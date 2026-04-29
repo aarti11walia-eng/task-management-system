@@ -62,8 +62,9 @@ if (!isset($_SESSION['user_id'])) {
                 <label>Status</label>
                 <select name="status" required>
                     <option value="">Select Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                     <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
                 </select>
             </div>
 
@@ -79,7 +80,11 @@ if (!isset($_SESSION['user_id'])) {
                 <input type="text" name="category">
             </div>
 
-            <button type="submit">Add Task</button>
+            <form id="taskForm">
+    <button type="submit" class="add-task-btn">
+        <i class="fas fa-plus"></i> Add New Task
+    </button>
+</form>
 
         </form>
 

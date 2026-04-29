@@ -1,4 +1,5 @@
 <?php
+session_start(); // Session start karna zaroori hai
 include("../config/db.php");
 
 // CHECK IF ADMIN EXISTS
@@ -13,46 +14,44 @@ if (isset($_POST['register'])) {
 
     // ✅ EMPTY CHECK
     if (empty($name) || empty($email) || empty($password_raw)) {
-        echo "All fields are required!";
+        $_SESSION['error_msg'] = "All fields are required!";
+        header("Location: ../index.php");
         exit();
     }
 
     // ✅ EMAIL VALIDATION
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo "Invalid email format!";
-        exit();
-    }
-
-    // ✅ PASSWORD LENGTH
-    if (strlen($password_raw) < 6) {
-        echo "Password must be at least 6 characters!";
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email)) {
+        $_SESSION['error_msg'] = "Invalid email format!";
+        header("Location: ../index.php");
         exit();
     }
 
     // ✅ CHECK DUPLICATE EMAIL
+    // ... baki code same rahega ...
+
+// ✅ CHECK DUPLICATE EMAIL
     $checkEmail = $conn->query("SELECT * FROM users WHERE email='$email'");
+    
     if ($checkEmail->num_rows > 0) {
-        echo "Email already exists!";
+    
+        header("Location: ../index.php?error=exists");
         exit();
     }
 
     // HASH PASSWORD
     $password = password_hash($password_raw, PASSWORD_DEFAULT);
-
-    // DEFAULT ROLE
-    $role = $_POST['role'] ?? 'user';
-
-    // 🔐 ONLY ONE ADMIN
-    if ($role == 'admin' && $adminExists) {
-        echo "Admin already exists!";
-        exit();
-    }
+    $role = 'user';
 
     // INSERT USER
-    $conn->query("INSERT INTO users (name,email,password,role) 
-                  VALUES ('$name','$email','$password','$role')");
-
-    header("Location: ../index.php");
+    $sql = "INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$password', '$role')";
+    
+    if ($conn->query($sql)) {
+        header("Location: ../index.php?success=1");
+    } else {
+        header("Location: ../index.php?error=sqlerror");
+    }
     exit();
 }
 ?>
+
+    

@@ -2,30 +2,33 @@
 session_start();
 include("../config/db.php");
 
-// GET INPUTS
-$email = $_POST['email'];
+// 1. GET INPUTS
+$email = trim($_POST['email']);
 $password = $_POST['password'];
 
-// REQUIRED CHECK
+// 2. REQUIRED CHECK
 if (empty($email) || empty($password)) {
-    echo "All fields are required";
+    echo "<script>alert('All fields are required'); window.history.back();</script>";
     exit();
 }
 
-// ✅ FULL EMAIL VALIDATION (STANDARD PHP WAY)
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo "Invalid email format";
+// 3. FULL EMAIL VALIDATION
+if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email)) {
+    echo "<script>alert('Invalid email format or garbage characters detected!'); window.history.back();</script>";
     exit();
 }
 
-// FETCH USER
-$result = $conn->query("SELECT * FROM users WHERE email='$email'");
+// 4. FETCH USER (Including Soft Delete Check)
+// We add 'AND deleted_at IS NULL' to ensure deactivated users cannot log in.
+$result = $conn->query("SELECT * FROM users WHERE email='$email' AND deleted_at IS NULL");
 $user = $result->fetch_assoc();
 
+// 5. VERIFY & REDIRECT
 if ($user && password_verify($password, $user['password'])) {
 
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['role'] = $user['role'];
+    $_SESSION['name'] = $user['name'];
 
     if ($user['role'] == 'admin') {
         header("Location: ../admin/dashboard.php");
@@ -35,6 +38,11 @@ if ($user && password_verify($password, $user['password'])) {
     exit();
 
 } else {
-    echo "Invalid login credentials";
+    // THIS PART NOW USES THE JAVASCRIPT ALERT
+    echo "<script>
+            alert('Invalid login credentials .'); 
+            window.history.back();
+          </script>";
+    exit();
 }
 ?>
