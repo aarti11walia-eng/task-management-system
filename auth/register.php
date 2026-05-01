@@ -1,57 +1,57 @@
 <?php
-session_start(); // Session start karna zaroori hai
+session_start();
+// Error reporting on karein taaki DB errors dikhein
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 include("../config/db.php");
 
-// CHECK IF ADMIN EXISTS
-$adminCheck = $conn->query("SELECT * FROM users WHERE role='admin'");
-$adminExists = $adminCheck->num_rows > 0;
+if(isset($_POST['register'])){
 
-if (isset($_POST['register'])) {
-
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $password_raw = $_POST['password'];
-
-    // ✅ EMPTY CHECK
-    if (empty($name) || empty($email) || empty($password_raw)) {
-        $_SESSION['error_msg'] = "All fields are required!";
+    // 1. Check if Email is in session
+    if(!isset($_SESSION['otp_email'])){
+        $_SESSION['error_msg'] = "Registration session expired. Please verify OTP again.";
         header("Location: ../index.php");
         exit();
     }
 
-    // ✅ EMAIL VALIDATION
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email)) {
-        $_SESSION['error_msg'] = "Invalid email format!";
-        header("Location: ../index.php");
-        exit();
-    }
-
-    // ✅ CHECK DUPLICATE EMAIL
-    // ... baki code same rahega ...
-
-// ✅ CHECK DUPLICATE EMAIL
-    $checkEmail = $conn->query("SELECT * FROM users WHERE email='$email'");
-    
-    if ($checkEmail->num_rows > 0) {
-    
-        header("Location: ../index.php?error=exists");
-        exit();
-    }
-
-    // HASH PASSWORD
-    $password = password_hash($password_raw, PASSWORD_DEFAULT);
+    // 2. Data Collect
+    $name = mysqli_real_escape_string($conn, $_POST['name']);
+    $email = $_SESSION['otp_email']; // OTP wali email hi use karein
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $role = 'user';
 
-    // INSERT USER
-    $sql = "INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$password', '$role')";
-    
-    if ($conn->query($sql)) {
-        header("Location: ../index.php?success=1");
-    } else {
-        header("Location: ../index.php?error=sqlerror");
+    try {
+        // 3. Check if email already exists (Last minute check)
+        $checkEmail = $conn->query("SELECT id FROM users WHERE email='$email'");
+        if($checkEmail->num_rows > 0){
+            $_SESSION['error_msg'] = "Email already registered!";
+            header("Location: ../index.php");
+            exit();
+        }
+
+        // 4. INSERT QUERY
+        // Check karein ki table ka naam 'users' hi hai aur columns sahi hain
+        $sql = "INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$password', '$role')";
+        
+        if($conn->query($sql)){
+            // ✅ Success
+            unset($_SESSION['otp']);
+            unset($_SESSION['otp_email']);
+            unset($_SESSION['otp_expiry']);
+            unset($_SESSION['otp_verified']);
+
+            header("Location: ../index.php?success=1");
+            exit();
+        } else {
+            $_SESSION['error_msg'] = "Database error. Could not save user.";
+            header("Location: ../index.php");
+            exit();
+        }
+
+    } catch (Exception $e) {
+        // Agar table ya column name galat hai toh ye error dikhayega
+        $_SESSION['error_msg'] = "DB Error: " . $e->getMessage();
+        header("Location: ../index.php");
+        exit();
     }
-    exit();
 }
 ?>
-
-    

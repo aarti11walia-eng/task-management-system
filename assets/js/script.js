@@ -31,10 +31,14 @@ if (taskForm) {
         })
         .then(res => res.text())
         .then(data => {
-            alert("Task Added Successfully ✅");
-            loadTasks();   // refresh the 3-column grid
-            loadStats();   // refresh dashboard stats
-            taskForm.reset(); // clear form
+            if (data.trim().toLowerCase() === "success") {
+                alert("Task Added Successfully ✅");
+                loadTasks();   // refresh the 3-column grid
+                loadStats();   // refresh dashboard stats
+                taskForm.reset(); // clear form
+            } else {
+                alert("Error: " + data);
+            }
         })
         .catch(err => {
             console.error(err);
@@ -61,10 +65,14 @@ function deleteTask(id) {
     if (confirm("Are you sure you want to delete this task?")) {
         fetch("tasks/delete_task.php?id=" + id)
         .then(res => res.text())
-        .then(() => {
-            alert("Task Deleted ❌");
-            loadTasks();
-            loadStats();
+        .then(data => {
+            if (data.trim().toLowerCase() === "success") {
+                alert("Task Deleted ❌");
+                loadTasks();
+                loadStats();
+            } else {
+                alert("Delete failed: " + data);
+            }
         })
         .catch(err => console.error("Delete error:", err));
     }
@@ -74,10 +82,14 @@ function deleteTask(id) {
 function completeTask(id) {
     fetch("tasks/complete_task.php?id=" + id)
     .then(res => res.text())
-    .then(() => {
-        alert("Task Marked as Completed ✅");
-        loadTasks();
-        loadStats();
+    .then(data => {
+        if (data.trim().toLowerCase() === "success") {
+            alert("Task Marked as Completed ✅");
+            loadTasks();
+            loadStats();
+        } else {
+            alert("Error: " + data);
+        }
     })
     .catch(err => console.error("Complete error:", err));
 }
@@ -95,13 +107,15 @@ function editTask(id, title, desc, cat, prio, status, date) {
     
     // 2. Show modal centered
     const modal = document.getElementById('editModal');
-    modal.style.display = 'flex'; // Use flex to center via CSS
+    if (modal) {
+        modal.style.display = 'flex'; // Use flex to center via CSS
+    }
 }
 
 function saveTaskChanges() {
     let formData = new FormData();
     
-    // We grab EVERY field. If we miss one, the DB will overwrite it with empty text.
+    // Grabbing fields for the update
     formData.append("id", document.getElementById('editId').value);
     formData.append("title", document.getElementById('editTitle').value);
     formData.append("description", document.getElementById('editDescription').value);
@@ -118,14 +132,15 @@ function saveTaskChanges() {
     .then(data => {
         if (data.trim().toLowerCase() === "success") {
             closeModal();
-            loadTasks(); // Refreshes the 3-column grid
-            if(typeof loadStats === 'function') loadStats();
+            loadTasks(); // Refreshes the grid
+            loadStats(); // Refreshes dashboard stats
         } else {
             alert("Error: " + data);
         }
     })
     .catch(err => console.error("Update error:", err));
 }
+
 // ===== LOAD STATS =====
 function loadStats() {
     let totalEl = document.getElementById("totalTasks");
@@ -143,7 +158,10 @@ function loadStats() {
 
 // Helper to close modal
 function closeModal() {
-    document.getElementById('editModal').style.display = 'none';
+    const modal = document.getElementById('editModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 // Close modal if user clicks outside of the box

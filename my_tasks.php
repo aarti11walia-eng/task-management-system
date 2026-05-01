@@ -1,5 +1,6 @@
 <?php
 session_start();
+// Security Check: Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
@@ -20,7 +21,7 @@ if (!isset($_SESSION['user_id'])) {
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0,0,0,0.6);
-            display: none; /* Controlled by JS */
+            display: none; 
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -38,6 +39,17 @@ if (!isset($_SESSION['user_id'])) {
         .form-group input, .form-group select, .form-group textarea {
             width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;
         }
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+        /* Badge Styles */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; }
+        .high { background: #ef4444; }
+        .medium { background: #f59e0b; }
+        .low { background: #10b981; }
     </style>
 </head>
 <body>
@@ -54,17 +66,19 @@ if (!isset($_SESSION['user_id'])) {
 
     <div class="main">
         <div class="header">
-            <h2>Task List</h2>
+            <h2>Welcome, <?php echo htmlspecialchars($_SESSION['name'] ?? 'User'); ?></h2>
         </div>
         
         <div id="taskList" class="task-grid">
-            </div>
+            <p style="color: #64748b;">Loading your secure tasks...</p>
+        </div>
     </div>
 </div>
 
+<!-- EDIT TASK MODAL -->
 <div id="editModal" class="modal">
     <div class="modal-content">
-        <h3 style="margin-bottom: 20px; font-size: 20px;">Edit Task Details</h3>
+        <h3 style="margin-bottom: 20px; font-size: 20px; color: #1e293b;">Edit Task Details</h3>
         
         <input type="hidden" id="editId">
         
@@ -109,42 +123,43 @@ if (!isset($_SESSION['user_id'])) {
         </div>
 
         <div class="modal-actions" style="margin-top: 25px; display: flex; gap: 10px;">
-            <button class="btn-complete" style="flex:2; padding: 12px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 8px;" onclick="saveTaskChanges()">Update Task</button>
-            <button class="btn-delete" style="flex:1; padding: 12px; cursor: pointer; background: #f3f4f6; border: none; border-radius: 8px;" onclick="closeModal()">Cancel</button>
+            <button style="flex:2; padding: 12px; cursor: pointer; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600;" onclick="saveTaskChanges()">Update Task</button>
+            <button style="flex:1; padding: 12px; cursor: pointer; background: #f3f4f6; border: none; border-radius: 8px;" onclick="closeModal()">Cancel</button>
         </div>
     </div>
 </div>
 
-<script src="assets/js/script.js"></script>
 <script>
     window.onload = function() {
         loadTasks();
     };
 
-    /**
-     * THE FIX: This function takes the data from your card and 
-     * force-injects it into the dropdowns.
-     */
+    function loadTasks() {
+        // Changed to .text() because get_task.php sends HTML cards directly
+        fetch("tasks/get_tasks.php")
+        .then(res => {
+            if (!res.ok) throw new Error("Could not find tasks/get_tasks.php");
+            return res.text(); 
+        })
+        .then(htmlData => {
+            const taskList = document.getElementById('taskList');
+            // Inject the HTML directly into the grid
+            taskList.innerHTML = htmlData;
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            document.getElementById('taskList').innerHTML = "<p style='color:red;'>Error: " + err.message + "</p>";
+        });
+    }
+
     function editTask(id, title, desc, cat, prio, status, date) {
         document.getElementById('editId').value = id;
         document.getElementById('editTitle').value = title;
         document.getElementById('editDescription').value = desc;
         document.getElementById('editCategory').value = cat;
         document.getElementById('editDate').value = date;
-
-        // CRITICAL FIX: Convert priority to lowercase and assign it
-        const priorityEl = document.getElementById('editPriority');
-        if (priorityEl) {
-            // .trim().toLowerCase() makes sure "High" or "high " both work
-            priorityEl.value = prio.trim().toLowerCase();
-        }
-
-        const statusEl = document.getElementById('editStatus');
-        if (statusEl) {
-            statusEl.value = status.trim().toLowerCase();
-        }
-
-        // Show the modal centered
+        document.getElementById('editPriority').value = prio.toLowerCase();
+        document.getElementById('editStatus').value = status.toLowerCase();
         document.getElementById('editModal').style.display = 'flex';
     }
 
@@ -153,7 +168,6 @@ if (!isset($_SESSION['user_id'])) {
     }
 
     function saveTaskChanges() {
-        // Prepare data
         let formData = new FormData();
         formData.append("id", document.getElementById('editId').value);
         formData.append("title", document.getElementById('editTitle').value);
@@ -163,20 +177,23 @@ if (!isset($_SESSION['user_id'])) {
         formData.append("status", document.getElementById('editStatus').value);
         formData.append("due_date", document.getElementById('editDate').value);
 
-        // Send to PHP
         fetch("tasks/update_task.php", {
             method: "POST",
             body: formData
         })
         .then(res => res.text())
         .then(data => {
-            if (data.trim() === "success") {
+            if (data.trim().toLowerCase() === "success") {
                 closeModal();
-                loadTasks(); // Refresh the grid
+                loadTasks();
             } else {
-                alert("Error updating: " + data);
+                alert("Update failed: " + data);
             }
         });
+    }
+
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('editModal')) closeModal();
     }
 </script>
 

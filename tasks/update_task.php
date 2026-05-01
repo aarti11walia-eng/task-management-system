@@ -1,32 +1,49 @@
 <?php
+// Move session_start to the very top before any includes
+session_start();
 include("../config/db.php");
-session_start(); // Important if you want to ensure the user owns the task
+
+// 1. Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    exit("unauthorized");
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
-    $id = $conn->real_escape_string($_POST['id']);
-    $title = $conn->real_escape_string($_POST['title']);
-    $desc = $conn->real_escape_string($_POST['description']);
-    $cat = $conn->real_escape_string($_POST['category']);
-    $prio = $conn->real_escape_string($_POST['priority']);
-    $status = $conn->real_escape_string($_POST['status']);
-    $date = $conn->real_escape_string($_POST['due_date']);
+    $user_id = $_SESSION['user_id'];
+    
+    // Use the (int) cast for IDs to ensure they are treated as numbers
+    $id = (int)$_POST['id'];
+    $title = trim($_POST['title']);
+    $desc = trim($_POST['description']);
+    $cat = trim($_POST['category']);
+    $prio = $_POST['priority'];
+    $status = $_POST['status'];
+    $date = $_POST['due_date'];
 
-    $sql = "UPDATE tasks SET 
-            title='$title', 
-            description='$desc', 
-            category='$cat', 
-            priority='$prio', 
-            status='$status', 
-            due_date='$date' 
-            WHERE id='$id'";
+    // 2. Prepared Statement
+    // Ensuring the user_id matches prevents "ID Guessing" attacks
+    $stmt = $conn->prepare("UPDATE tasks SET 
+                            title = ?, 
+                            description = ?, 
+                            category = ?, 
+                            priority = ?, 
+                            status = ?, 
+                            due_date = ? 
+                            WHERE id = ? AND user_id = ?");
 
-    if ($conn->query($sql)) {
-        // Use lowercase "success" to make JavaScript comparison easier
+    // "ssssssii" = 6 strings, 2 integers
+    $stmt->bind_param("ssssssii", $title, $desc, $cat, $prio, $status, $date, $id, $user_id);
+
+    if ($stmt->execute()) {
+        // Output 'success' in lowercase to match your JS 'data.trim().toLowerCase()' check
         echo "success"; 
     } else {
-        echo "Error: " . $conn->error;
+        echo "Error: " . $stmt->error;
     }
+    
+    $stmt->close();
 } else {
-    echo "No ID provided or invalid request.";
+    echo "invalid_request";
 }
+$conn->close();
 ?>

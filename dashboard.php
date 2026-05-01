@@ -5,18 +5,17 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Task Manager</title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-
 <div class="container">
-
-    <!-- Sidebar -->
     <div class="sidebar">
         <h2>Task Manager</h2>
         <ul>
@@ -26,94 +25,71 @@ if (!isset($_SESSION['user_id'])) {
         </ul>
     </div>
 
-    <!-- Main Content -->
     <div class="main">
-
         <h2>Welcome to Dashboard</h2>
 
-        <!-- ✅ ADD TASK FORM -->
+        <!-- FORM SECTION -->
         <form id="taskForm" class="task-form">
-
-            <!-- TITLE -->
             <div class="form-group">
                 <label>Task Title</label>
                 <input type="text" name="title" required>
             </div>
-
-            <!-- DESCRIPTION -->
             <div class="form-group">
                 <label>Description</label>
                 <textarea name="description"></textarea>
             </div>
-
-            <!-- PRIORITY -->
             <div class="form-group">
                 <label>Priority</label>
                 <select name="priority" required>
                     <option value="">Select Priority</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                 </select>
             </div>
-
-            <!-- STATUS -->
             <div class="form-group">
                 <label>Status</label>
                 <select name="status" required>
-                    <option value="">Select Status</option>
-                    <option value="Pending">Pending</option>
-                     <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
                 </select>
             </div>
-
-            <!-- DUE DATE -->
             <div class="form-group">
                 <label>Due Date</label>
                 <input type="date" name="due_date" required>
             </div>
-
-            <!-- CATEGORY -->
             <div class="form-group">
                 <label>Category</label>
                 <input type="text" name="category">
             </div>
-
-            <form id="taskForm">
-    <button type="submit" class="add-task-btn">
-        <i class="fas fa-plus"></i> Add New Task
-    </button>
-</form>
-
+            <button type="submit" class="add-task-btn">
+                <i class="fas fa-plus"></i> Add New Task
+            </button>
         </form>
 
-        <!-- ✅ STATS -->
+        <!-- STATS SECTION -->
         <div class="stats">
-
             <div class="card">
                 <h3>Total Tasks</h3>
                 <p id="totalTasks">0</p>
             </div>
-
             <div class="card">
                 <h3>Pending Tasks</h3>
                 <p id="pendingTasks">0</p>
             </div>
-
             <div class="card">
                 <h3>Completed Tasks</h3>
                 <p id="completedTasks">0</p>
             </div>
-
         </div>
 
+        <!-- ✅ CRITICAL ADDITION: TASK LIST CONTAINER -->
+        <!-- This ID is required for script.js to refresh the view after adding a task -->
+        <div id="taskList" style="display:none;"></div>
         
     </div>
 </div>
-
-<!-- ✅ ONLY THIS SCRIPT (IMPORTANT) -->
 <script src="assets/js/script.js"></script>
-
 </body>
 </html>

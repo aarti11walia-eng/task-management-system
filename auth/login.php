@@ -12,19 +12,33 @@ if (empty($email) || empty($password)) {
     exit();
 }
 
-// 3. FULL EMAIL VALIDATION
-if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email)) {
-    echo "<script>alert('Invalid email format or garbage characters detected!'); window.history.back();</script>";
+/** 
+ * 3. STRICT EMAIL VALIDATION 
+ * Matches your registration logic: 
+ * - Must contain letters
+ * - Must end exactly in .com
+ */
+$emailPattern = "/^(?=.*[a-zA-Z])[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/";
+if (!preg_match($emailPattern, $email)) {
+    echo "<script>alert('Invalid email format! Must contain letters and end in .com'); window.history.back();</script>";
     exit();
 }
 
-// 4. FETCH USER (Including Soft Delete Check)
-// We add 'AND deleted_at IS NULL' to ensure deactivated users cannot log in.
-$result = $conn->query("SELECT * FROM users WHERE email='$email' AND deleted_at IS NULL");
+// 4. FETCH USER (SECURE VERSION using Prepared Statements)
+$stmt = $conn->prepare("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 // 5. VERIFY & REDIRECT
 if ($user && password_verify($password, $user['password'])) {
+
+    // IMPORTANT: Check if the user is verified (if you use OTP status in DB)
+    // if ($user['is_verified'] == 0) {
+    //     echo "<script>alert('Please verify your email via OTP first.'); window.location.href='../index.php';</script>";
+    //     exit();
+    // }
 
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['role'] = $user['role'];
@@ -38,9 +52,8 @@ if ($user && password_verify($password, $user['password'])) {
     exit();
 
 } else {
-    // THIS PART NOW USES THE JAVASCRIPT ALERT
     echo "<script>
-            alert('Invalid login credentials .'); 
+            alert('Invalid login credentials.'); 
             window.history.back();
           </script>";
     exit();

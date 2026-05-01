@@ -18,7 +18,6 @@
             font-size: 14px;
             font-weight: 500;
         }
-        /* Style for the Register/Login toggle link */
         .switch-link {
             cursor: pointer; 
             color: #2563eb; 
@@ -27,6 +26,9 @@
         }
         .switch-link:hover {
             text-decoration: underline;
+        }
+        #otpSection, #passwordSection {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -42,11 +44,10 @@
             }
             ?>
 
+            <!-- LOGIN FORM -->
             <form id="loginForm" method="POST" action="auth/login.php">
                 <h2>Log In</h2>
-                <input type="email" name="email" placeholder="Email" required 
-                       pattern="^[a-z0-9._%+-]+@[a-z0-9.-]+\.com$" 
-                       title="Enter a valid email ending in .com">
+                <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="password" placeholder="Password" required>
                 
                 <div class="options">
@@ -62,22 +63,29 @@
                 </p>
             </form>
 
+            <!-- REGISTER FORM -->
             <form id="registerForm" method="POST" action="auth/register.php" style="display:none;">
                 <h2>Create Account</h2>
-                
-                <input type="text" id="regName" name="name" placeholder="Full Name" required 
-                       pattern="^[A-Za-z\s]+$" 
-                       title="Name must contain only alphabets and spaces.">
-                
-                <input type="email" id="regEmail" name="email" placeholder="Email" required 
-                       pattern="^[a-z0-9._%+-]+@[a-z0-9.-]+\.com$" 
-                       title="Enter a valid email ending in .com">
-                
-                <input type="password" name="password" placeholder="Password" required>
-                <input type="hidden" name="role" value="user">
-                
-                <button type="submit" name="register">Register</button>
-                
+
+                <!-- STEP 1: Name & Email -->
+                <input type="text" id="regName" name="name" placeholder="Name" required>
+                <input type="email" id="regEmail" name="email" placeholder="Email "required>
+
+                <button type="button" id="sendOtpBtn">Send OTP</button>
+
+                <!-- STEP 2: OTP Verification -->
+                <div id="otpSection" style="display:none;">
+                    <input type="text" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6">
+                    <button type="button" id="verifyOtpBtn">Verify OTP</button>
+                </div>
+
+                <!-- STEP 3: Password -->
+                <div id="passwordSection" style="display:none;">
+                    <input type="password" name="password" id="regPassword" placeholder="Create Password" required>
+                    <input type="hidden" name="role" value="user">
+                    <button type="submit" name="register">Register</button>
+                </div>
+
                 <p class="switch-text">
                     Already have an account? 
                     <span class="switch-link" onclick="toggleForm()">Login</span>
@@ -93,7 +101,7 @@
 </div>
 
 <script>
-// Toggle between Login and Register forms
+// --- FORM TOGGLE LOGIC ---
 function toggleForm() {
     let login = document.getElementById("loginForm");
     let register = document.getElementById("registerForm");
@@ -106,61 +114,109 @@ function toggleForm() {
     }
 }
 
-// Handle URL parameters for alerts
-window.onload = function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    if (urlParams.get('error') === 'exists') {
-        alert("Email already exists!");
-        toggleForm(); 
-    }
-    
-    if (urlParams.get('success') === '1') {
-        alert("Registration Successful! Please login.");
-    }
-
-    if (urlParams.get('error') === 'invalidname') {
-        alert("Invalid Name! Use only alphabets.");
-        toggleForm();
-    }
+/**
+ * EMAIL VALIDATION LOGIC
+ * 1. Must contain at least one letter (prevents numbers-only emails)
+ * 2. Must end exactly in .com
+ */
+function isValidEmail(email) {
+    const emailPattern = /^(?=.*[a-zA-Z])[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/;
+    return emailPattern.test(email);
 }
 
-/** * FORM VALIDATION LOGIC 
- */
-
-// Login Validation
-document.getElementById("loginForm").addEventListener("submit", function(e){
-    let email = this.email.value.trim();
-    let emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.com$/;
-    
-    if(!emailPattern.test(email)){
-        alert("Please enter a valid email address!");
-        e.preventDefault();
-    }
-});
-
-// Register Validation (Including Name Check)
-document.getElementById("registerForm").addEventListener("submit", function(e){
-    let name = document.getElementById("regName").value.trim();
+// --- STEP 1: SEND OTP ---
+document.getElementById("sendOtpBtn").addEventListener("click", function(){
     let email = document.getElementById("regEmail").value.trim();
-    
-    // Regex: Start to End, only Alphabets (A-Z, a-z) and Spaces (\s)
-    let namePattern = /^[A-Za-z\s]+$/;
-    let emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.com$/;
+    let name = document.getElementById("regName").value.trim();
+    let btn = this;
 
-    // Validate Name
-    if(!namePattern.test(name)){
-        alert("Error: Name must contain alphabets only. No digits or symbols allowed!");
-        e.preventDefault();
-        return; 
+    if(!name || !email){
+        alert("Please enter both name and email!");
+        return;
     }
 
-    // Validate Email
-    if(!emailPattern.test(email)){
-        alert("Error: Please enter a valid email address!");
-        e.preventDefault();
+    if(!isValidEmail(email)){
+        alert("Invalid Email! ");
+        return;
     }
+
+    btn.innerText = "Sending...";
+    btn.disabled = true;
+
+    fetch("auth/send_otp.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "email=" + encodeURIComponent(email) + "&name=" + encodeURIComponent(name)
+    })
+    .then(res => res.text())
+    .then(data => {
+        alert(data.trim());
+        document.getElementById("otpSection").style.display = "block";
+        btn.innerText = "Resend OTP";
+        btn.disabled = false;
+    })
+    .catch(err => {
+        alert("Error sending OTP. Check connection.");
+        btn.disabled = false;
+    });
 });
+
+// --- STEP 2: VERIFY OTP ---
+document.getElementById("verifyOtpBtn").addEventListener("click", function(){
+    let otp = document.getElementById("otpInput").value.trim();
+    let verifyBtn = this;
+
+    if(otp.length < 6){
+        alert("Enter a valid 6-digit OTP");
+        return;
+    }
+
+    fetch("auth/verify_otp.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "otp=" + encodeURIComponent(otp)
+    })
+    .then(res => res.text())
+    .then(data => {
+        let response = data.trim();
+        if(response === "success"){
+            alert("OTP Verified Successfully!");
+            document.getElementById("passwordSection").style.display = "block";
+            document.getElementById("otpSection").style.display = "none";
+            document.getElementById("sendOtpBtn").style.display = "none";
+            document.getElementById("regEmail").readOnly = true;
+            document.getElementById("regName").readOnly = true;
+        } else {
+            alert("Invalid OTP! Please check again.");
+        }
+    });
+});
+
+// --- FINAL VALIDATION ON SUBMIT ---
+document.getElementById("registerForm").addEventListener("submit", function(e){
+    let password = document.getElementById("regPassword").value;
+    let email = document.getElementById("regEmail").value.trim();
+
+    if(!isValidEmail(email)){
+        alert("Proper email validation failed.");
+        e.preventDefault();
+        return;
+    }
+
+    
+});
+
+// --- URL PARAMETER ALERTS ---
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error') === 'exists') {
+        alert("This email is already registered!");
+        toggleForm(); 
+    }
+    if (urlParams.get('success') === '1') {
+        alert("Registration Successful! You can now log in.");
+    }
+}
 </script>
 </body>
 </html>
